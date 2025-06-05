@@ -660,20 +660,17 @@ class FDConv(nn.Conv2d):
     def profile_module(
                 self, input: Tensor, *args, **kwargs
             ):
-            # TODO: to edit it
+            """Roughly profile the parameters and MACs of this layer."""
             b_sz, c, h, w = input.shape
             seq_len = h * w
 
-            # FFT iFFT
-            p_ff, m_ff = 0, 5 * b_sz * seq_len * int(math.log(seq_len)) * c
-            # others
-            # params = macs = sum([p.numel() for p in self.parameters()])
-            params = macs = self.hidden_size * self.hidden_size_factor * self.hidden_size * 2 * 2 // self.num_blocks
-            # // 2 min n become half after fft
-            macs = macs * b_sz * seq_len
+            # Parameter count for adaptive convolution weights
+            params = self.out_channels * self.in_channels * self.kernel_size[0] * self.kernel_size[1]
 
-            # return input, params, macs
-            return input, params, macs + m_ff
+            # MACs for spatial convolution
+            macs = params * seq_len
+
+            return input, params, macs
 
 if __name__ == '__main__':
     pass
